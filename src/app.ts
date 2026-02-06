@@ -4,6 +4,8 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
+import authRoutes from "./routes/auth.routes";
+import cookieParser from "cookie-parser";
 // import routes from "./routes";
 // import errorMiddleware from "./middleware/error.middleware";
 
@@ -16,18 +18,15 @@ app.use(helmet());
 app.use(morgan("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
+app.use(cookieParser());
 /* -------------------- Health check -------------------- */
 
 app.get("/health", (_, res) => {
   res.json({ status: "OK", message: "ATS Analyzer API running 🚀" });
 });
 
-/* -------------------- Routes -------------------- */
+app.use("/api/v0/auth", authRoutes);
 
-// app.use("/api", routes);
-
-/* -------------------- Error handler (LAST) -------------------- */
 
 // app.use(errorMiddleware);
 
