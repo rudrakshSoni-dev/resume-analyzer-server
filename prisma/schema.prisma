@@ -1,0 +1,101 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  resumes   Resume[]
+  createdAt DateTime @default(now())
+}
+
+model Resume {
+  id         String   @id @default(uuid())
+  userId     String
+  fileUrl    String
+  mimetype   String
+  parsedText String
+  atsScore   Float?
+  createdAt  DateTime @default(now())
+
+  user     User       @relation(fields: [userId], references: [id])
+  analyses Analysis[]
+}
+
+model Analysis {
+  id String @id @default(cuid())
+
+  resumeId String
+  resume   Resume @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+
+  atsScore        Float
+  keywordScore    Float
+  sectionScore    Float
+  skillScore      Float
+  structureScore  Float
+  semanticScore   Float
+  experienceScore Float
+  impactScore     Float
+
+  suggestions Json
+
+  createdAt DateTime @default(now())
+}
+
+model JobDescription {
+  id       String @id @default(uuid())
+  text     String
+  keywords Json
+}
+
+model Company {
+  id          String   @id @default(uuid())
+  name        String
+  linkedinUrl String   @unique
+  industry    String?
+  website     String?
+
+  jobs        Job[]
+  recruiters  Recruiter[]
+  applications Application[]
+
+  createdAt   DateTime @default(now())
+}
+
+model Recruiter {
+  id          String   @id @default(uuid())
+  name        String
+  title       String?
+  linkedinUrl String
+  companyId   String
+
+  company     Company  @relation(fields: [companyId], references: [id])
+}
+
+model Job {
+  id        String   @id @default(uuid())
+  title     String
+  companyId String
+  location  String?
+  url       String
+
+  company   Company  @relation(fields: [companyId], references: [id])
+}
+
+model Application {
+  id        String   @id @default(uuid())
+  userId    String
+  companyId String
+  role      String
+  status    String
+  createdAt DateTime @default(now())
+
+  company   Company  @relation(fields: [companyId], references: [id])
+}
