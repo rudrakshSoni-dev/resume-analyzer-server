@@ -5,6 +5,7 @@ import cloudinary from "./config/cloudinary";
 import app from "./app";
 import prisma from "./prisma/client";
 
+
 const PORT = process.env.PORT || 5001;
 const cloudinary_config = cloudinary.config();
 console.log("Cloudinary configured:", !!cloudinary_config.cloud_name);
