@@ -7,6 +7,27 @@ export const registerSchema = z.object({
 });
 
 export const loginSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(6),
+  email: z.string().email("Invalid email"),
+  password: z.string().min(6, "Password must be at least 6 chars"),
+});
+
+export const forgotPasswordSchema = z.object({
+  email: z.string().email("Invalid email"),
+});
+
+export const resetPasswordSchema = z.object({
+  token: z
+    .string()
+    .min(10, "Invalid token")
+    .max(200, "Invalid token"),
+  newPassword: z
+    .string()
+    .min(6, "Password must be at least 6 chars"),
+});
+
+export const verifyEmailSchema = z.object({
+  token: z
+    .string()
+    .min(10, "Invalid token")
+    .max(200, "Invalid token"),
 });

@@ -8,12 +8,14 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(uuid())
-  name      String
-  email     String   @unique
-  password  String
-  resumes   Resume[]
-  createdAt DateTime @default(now())
+  id                String             @id @default(uuid())
+  name              String
+  email             String             @unique
+  password          String
+  is_verified       Boolean            @default(false)
+  passwordReset     PasswordReset?
+  emailVerification EmailVerification?
+  Resume            Resume[]
 }
 
 model Resume {
@@ -56,37 +58,37 @@ model JobDescription {
 }
 
 model Company {
-  id          String   @id @default(uuid())
+  id          String  @id @default(uuid())
   name        String
-  linkedinUrl String   @unique
+  linkedinUrl String  @unique
   industry    String?
   website     String?
 
-  jobs        Job[]
-  recruiters  Recruiter[]
+  jobs         Job[]
+  recruiters   Recruiter[]
   applications Application[]
 
-  createdAt   DateTime @default(now())
+  createdAt DateTime @default(now())
 }
 
 model Recruiter {
-  id          String   @id @default(uuid())
+  id          String  @id @default(uuid())
   name        String
   title       String?
   linkedinUrl String
   companyId   String
 
-  company     Company  @relation(fields: [companyId], references: [id])
+  company Company @relation(fields: [companyId], references: [id])
 }
 
 model Job {
-  id        String   @id @default(uuid())
+  id        String  @id @default(uuid())
   title     String
   companyId String
   location  String?
   url       String
 
-  company   Company  @relation(fields: [companyId], references: [id])
+  company Company @relation(fields: [companyId], references: [id])
 }
 
 model Application {
@@ -97,5 +99,20 @@ model Application {
   status    String
   createdAt DateTime @default(now())
 
-  company   Company  @relation(fields: [companyId], references: [id])
+  company Company @relation(fields: [companyId], references: [id])
+}
+
+model PasswordReset {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  token     String
+  expiresAt DateTime
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model EmailVerification {
+  id     String @id @default(uuid())
+  userId String @unique
+  token  String
+  user   User   @relation(fields: [userId], references: [id])
 }

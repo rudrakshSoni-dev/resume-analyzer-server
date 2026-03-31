@@ -1,52 +1,66 @@
 import { Request, Response } from "express";
-import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
+import crypto from "crypto";
+
 import {
-  findUserByEmail,
   registerUser,
+  loginUser,
   logoutUser,
-  comparePassword,
-  loginUser
+  findUserByEmail,
+  generateResetToken,
+  verifyResetToken,
+  updatePassword,
+  generateEmailVerificationToken,
+  verifyEmailToken,
+  markEmailVerified,
 } from "../services/auth.service";
-const JWT_SECRET = process.env.JWT_SECRET || "secret";
+
+import { sendEmail } from "../utils/email";
+
 const COOKIE_NAME = "token";
 const SALT_ROUNDS = 10;
 
 export async function register(req: Request, res: Response) {
   try {
-    // const { name, email, password } = req.body;
-
-    // const existing = await findUserByEmail(email);
-
-    // if (existing)
-    //   return res.status(400).json({ message: "User already exists" });
-
-    // const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
-
-    // const user = await createUser(name, email, hashedPassword);
-
-    // res.status(201).json({
-    //   id: user.id,
-    //   email: user.email,
-    // });
     const result = await registerUser(req.body);
 
-    res.status(201).json(result);
+    const verificationToken = await generateEmailVerificationToken(result.email);
 
-  } catch(error: any) {
-    res.status(500).json({ message: error.message || "Registration failed" });
+    const verifyLink = `http://localhost:5000/api/v0/auth/verify-email?token=${verificationToken}`;
+
+    await sendEmail(
+      result.email, // send to actual user
+      "Verify your email",
+      `Click to verify: ${verifyLink}`
+    );
+
+    console.log("VERIFY TOKEN:", verificationToken);
+
+    return res.status(201).json({
+      message: "User registered. Please verify your email.",
+      user: result.user,
+      verificationToken,
+      verifyLink,
+    });
+  } catch (error: any) {
+    return res.status(500).json({
+      message: error.message || "Registration failed",
+    });
   }
 }
 
-
-export async function login(
-  req: Request,
-  res: Response,
-) {
+export async function login(req: Request, res: Response) {
   try {
     const { email, password } = req.body;
 
-    const result = await loginUser({email: email, password: password});
+    const result = await loginUser({ email, password });
+
+    // optional: block unverified users
+    if (!result.user.is_verified) {
+      return res.status(403).json({
+        message: "Please verify your email before logging in",
+      });
+    }
 
     res.cookie(COOKIE_NAME, result.token, {
       httpOnly: true,
@@ -67,12 +81,9 @@ export async function login(
   }
 }
 
-export async function logout(
-  req: Request,
-  res: Response,
-) {
+export async function logout(req: Request, res: Response) {
   try {
-    await logoutUser();
+    await logoutUser(); // optional (for blacklist/session)
     res.clearCookie(COOKIE_NAME);
     return res.json({
       message: "Logged out successfully",
@@ -80,6 +91,70 @@ export async function logout(
   } catch (error) {
     return res.status(500).json({
       message: "Logout failed",
+    });
+  }
+}
+
+export async function forgotPassword(req: Request, res: Response) {
+  try {
+    const { email } = req.body;
+    const user = await findUserByEmail(email);
+    // don't reveal user existence
+    if (!user) {
+      return res.json({ message: "If account exists, reset link sent" });
+    }
+    const token = await generateResetToken(email);
+    const resetLink = `http://localhost:5000/api/v0/auth/reset-password?token=${token}`;
+    await sendEmail(
+      "mrrssoni12@gmail.com",
+      "Reset Password",
+      `Click to reset: ${resetLink}`
+    );
+
+    return res.json({
+      message: "If account exists, reset link sent",
+    });
+  } catch (error: any) {
+    return res.status(400).json({
+      message: error.message || "Failed to process request",
+    });
+  }
+}
+
+export async function resetPassword(req: Request, res: Response) {
+  try {
+    const { token, newPassword } = req.body;
+
+    const userId = await verifyResetToken(token);
+
+    const hashedPassword = await bcrypt.hash(newPassword, SALT_ROUNDS);
+
+    await updatePassword(userId, hashedPassword);
+
+    return res.json({
+      message: "Password updated successfully",
+    });
+  } catch (error: any) {
+    return res.status(400).json({
+      message: error.message || "Invalid or expired token",
+    });
+  }
+}
+
+export async function verifyEmail(req: Request, res: Response) {
+  try {
+    const { token } = req.body;
+
+    const userId = await verifyEmailToken(token);
+
+    await markEmailVerified(userId);
+
+    return res.json({
+      message: "Email verified successfully",
+    });
+  } catch (error: any) {
+    return res.status(400).json({
+      message: error.message || "Invalid verification token",
     });
   }
 }
