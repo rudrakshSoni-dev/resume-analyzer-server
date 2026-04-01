@@ -3,3 +3,5 @@ function generateOTP() {
 }
 
 //this generates otp
+
+//this is just for green dot
