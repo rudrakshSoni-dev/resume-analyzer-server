@@ -7,7 +7,7 @@ const OLLAMA_URL =
   process.env.OLLAMA_URL ||
   "http://host.docker.internal:11434/api/generate";
 
-const MODEL_NAME = "phi3"; // or "phi3:mini"
+const MODEL_NAME = "phi3:mini"; // or "phi3:mini"
 
 const safeJSONParse = <T>(text: string, fallback: T): T => {
   try {
