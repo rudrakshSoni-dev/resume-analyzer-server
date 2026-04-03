@@ -16,13 +16,20 @@ export const forgotPasswordSchema = z.object({
 });
 
 export const resetPasswordSchema = z.object({
-  token: z
+  email: z.string().email("Invalid email"),
+  otp: z
     .string()
-    .min(10, "Invalid token")
-    .max(200, "Invalid token"),
+    .length(6, "Invalid token"),
   newPassword: z
     .string()
     .min(6, "Password must be at least 6 chars"),
+});
+
+export const verifyResetOtpSchema = z.object({
+  email: z.string().email("Invalid email"),
+  otp: z
+    .string()
+    .length(6, "Invalid OTP"),
 });
 
 export const verifyEmailSchema = z.object({

@@ -13,7 +13,7 @@ model User {
   email             String             @unique
   password          String
   is_verified       Boolean            @default(false)
-  passwordReset     PasswordReset?
+  passwordResetOtp     PasswordResetOtp?
   emailVerification EmailVerification?
   Resume            Resume[]
 }
@@ -102,12 +102,13 @@ model Application {
   company Company @relation(fields: [companyId], references: [id])
 }
 
-model PasswordReset {
+model PasswordResetOtp {
   id        String   @id @default(uuid())
   userId    String   @unique
-  otp     String
+  otp       String
   expiresAt DateTime
-  user      User     @relation(fields: [userId], references: [id])
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model EmailVerification {

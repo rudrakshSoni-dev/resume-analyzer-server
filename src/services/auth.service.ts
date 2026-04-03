@@ -121,21 +121,84 @@ export async function generateResetToken(email: string) {
   });
 
   return rawToken;
+
 }
 
-export async function verifyResetToken(token: string) {
-  const hashedToken = hashToken(token);
+export async function sendPasswordResetOtp(email: string) {
+  const user = await findUserByEmail(email);
+  if (!user) throw new Error("User not found");
 
-  const record = await prisma.passwordReset.findFirst({
-    where: { token: hashedToken },
+  const otp = generateOtp();
+  const hashedOtp = hashOtp(otp);
+  const expiresAt = getOtpExpiry();
+
+  await prisma.passwordResetOtp.upsert({
+    where: { userId: user.id },
+    update: {
+      otp: hashedOtp,
+      expiresAt,
+    },
+    create: {
+      userId: user.id,
+      otp: hashedOtp,
+      expiresAt,
+    },
   });
 
-  if (!record || record.expiresAt < new Date()) {
-    throw new Error("Invalid or expired token");
+  return otp; // send via email
+}
+
+export async function verifyPasswordResetOtp(email: string, otp: string) {
+  const user = await findUserByEmail(email);
+  if (!user) throw new Error("User not found");
+
+  const record = await prisma.passwordResetOtp.findUnique({
+    where: { userId: user.id },
+  });
+
+  if (!record) throw new Error("OTP not found");
+
+  if (isOtpExpired(record.expiresAt)) {
+    throw new Error("OTP expired");
   }
 
-  return record.userId;
+  const isValid = compareOtp(otp, record.otp);
+
+  if (!isValid) throw new Error("Invalid OTP");
+
+  return user.id; // allow reset
 }
+
+export async function resetPasswordWithOtp(
+  userId: string,
+  newPassword: string
+) {
+  const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+  await prisma.user.update({
+    where: { id: userId },
+    data: { password: hashedPassword },
+  });
+
+  // cleanup OTP
+  await prisma.passwordResetOtp.delete({
+    where: { userId },
+  });
+}
+
+// export async function verifyResetToken(token: string) {
+//   const hashedToken = hashToken(token);
+
+//   const record = await prisma.passwordReset.findFirst({
+//     where: { token: hashedToken },
+//   });
+
+//   if (!record || record.expiresAt < new Date()) {
+//     throw new Error("Invalid or expired token");
+//   }
+
+//   return record.userId;
+// }
 
 export async function updatePassword(userId: string, newPassword: string) {
   await prisma.user.update({

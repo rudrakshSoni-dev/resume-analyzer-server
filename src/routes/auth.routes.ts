@@ -6,6 +6,7 @@ import {
   forgotPassword,
   resetPassword,
   verifyEmail,
+  verifyResetOtp,
  } from "../controllers/auth.controllers";
 import { validate } from "../middleware/validate.middleware";
 import {
@@ -14,6 +15,7 @@ import {
   forgotPasswordSchema,
   resetPasswordSchema,
   verifyEmailSchema,
+  verifyResetOtpSchema,
 } from "../validators/auth.validator";
 import { requireAuth } from "../middleware/auth.middleware";
 
@@ -26,6 +28,7 @@ router.post("/health",(req,res)=>{
   res.json({ message: "auth route is healthy" });
 });
 router.post("/forgot-password", validate(forgotPasswordSchema), forgotPassword);
+router.post("/verify-reset-otp", validate(verifyResetOtpSchema), verifyResetOtp);
 router.post("/reset-password", validate(resetPasswordSchema), resetPassword);
 router.post("/verify-email", validate(verifyEmailSchema), verifyEmail);
 

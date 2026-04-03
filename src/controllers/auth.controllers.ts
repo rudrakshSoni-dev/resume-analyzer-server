@@ -10,12 +10,14 @@ import {
   logoutUser,
   findUserByEmail,
   generateResetToken,
-  verifyResetToken,
   updatePassword,
   generateEmailVerificationOtp,
   verifyEmailOtp,
   markEmailVerified,
   saveEmailOtp,
+  sendPasswordResetOtp,
+  verifyPasswordResetOtp,
+  resetPasswordWithOtp,
 } from "../services/auth.service";
 
 import { sendEmail } from "../utils/email";
@@ -29,7 +31,6 @@ export async function register(req: Request, res: Response) {
 
     const otp = generateOtp();
 
-
     await saveEmailOtp({
       email: result.email,
       otp,
@@ -38,10 +39,7 @@ export async function register(req: Request, res: Response) {
     console.log("EMAIL OTP:", otp);
 
     return res.status(201).json({
-      message: "User registered. Please verify your email using OTP.",
-      user: result.user,
-
-      otp,
+      message: "User registered. Please check your inbox to verify email using OTP.",
     });
   } catch (error: any) {
     return res.status(500).json({
@@ -99,45 +97,55 @@ export async function logout(req: Request, res: Response) {
 export async function forgotPassword(req: Request, res: Response) {
   try {
     const { email } = req.body;
-    const user = await findUserByEmail(email);
-    // don't reveal user existence
-    if (!user) {
-      return res.json({ message: "If account exists, reset link sent" });
-    }
-    const token = await generateResetToken(email);
-    const resetLink = `http://localhost:5000/api/v0/auth/reset-password?token=${token}`;
-    await sendEmail(
-      "mrrssoni12@gmail.com",
-      "Reset Password",
-      `Click to reset: ${resetLink}`
-    );
+
+    const otp = await sendPasswordResetOtp(email);
+
+    await sendVerificationOTP(email, otp);
 
     return res.json({
-      message: "If account exists, reset link sent",
+      message: "OTP sent to email",
     });
-  } catch (error: any) {
-    return res.status(400).json({
-      message: error.message || "Failed to process request",
+  } catch (err: any) {
+    return res.status(400).json({ message: err.message });
+  }
+}
+
+export async function verifyResetOtp(req: Request, res: Response) {
+  try {
+    const { email, otp } = req.body;
+
+    const userId = await verifyPasswordResetOtp(email, otp);
+
+    return res.json({
+      message: "OTP verified",
+      userId, // optional (or use temp token)
     });
+  } catch (err: any) {
+    return res.status(400).json({ message: err.message });
   }
 }
 
 export async function resetPassword(req: Request, res: Response) {
   try {
-    const { token, newPassword } = req.body;
+    const { email, otp, newPassword } = req.body;
+    console.log("Body:", req.body);
 
-    const userId = await verifyResetToken(token);
+    if (!email || !otp || !newPassword) {
+      return res.status(400).json({
+        message: "Email, OTP and newPassword are required",
+      });
+    }
 
-    const hashedPassword = await bcrypt.hash(newPassword, SALT_ROUNDS);
+    const userId = await verifyPasswordResetOtp(email, otp);
 
-    await updatePassword(userId, hashedPassword);
+    await resetPasswordWithOtp(userId, newPassword);
 
     return res.json({
-      message: "Password updated successfully",
+      message: "Password reset successful",
     });
-  } catch (error: any) {
+  } catch (err: any) {
     return res.status(400).json({
-      message: error.message || "Invalid or expired token",
+      message: err.message,
     });
   }
 }
