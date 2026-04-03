@@ -26,8 +26,7 @@ export const resetPasswordSchema = z.object({
 });
 
 export const verifyEmailSchema = z.object({
-  token: z
+  otp: z
     .string()
-    .min(10, "Invalid token")
-    .max(200, "Invalid token"),
+    .length(6, "Invalid OTP")
 });

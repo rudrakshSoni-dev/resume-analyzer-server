@@ -4,6 +4,7 @@ import prisma from "../prisma/client";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
+import { generateOtp, hashOtp, getOtpExpiry, isOtpExpired, compareOtp } from "../utils/otp";
 
 interface RegisterData {
   name: string;
@@ -19,17 +20,17 @@ interface LoginData {
 const SALT_ROUNDS = 10;
 const TOKEN_EXPIRY_MINUTES = 30;
 
-/**
- * REGISTER
- */
-export async function registerUser(data: RegisterData) {
+export async function registerUser(data: {
+  name: string;
+  email: string;
+  password: string;
+}) {
+  const hashedPassword = await bcrypt.hash(data.password, 10);
+
   const existingUser = await findUserByEmail(data.email);
-
   if (existingUser) {
-    throw new Error("User already exists");
+    throw new Error("Email already in use");
   }
-
-  const hashedPassword = await bcrypt.hash(data.password, SALT_ROUNDS);
 
   const user = await prisma.user.create({
     data: {
@@ -40,17 +41,7 @@ export async function registerUser(data: RegisterData) {
     },
   });
 
-  const token = generateToken(user.id);
-
-  return {
-    token,
-    email: user.email,
-    user: {
-      id: user.id,
-      name: user.name,
-      email: user.email,
-    },
-  };
+  return user;
 }
 
 /**
@@ -158,50 +149,37 @@ export async function updatePassword(userId: string, newPassword: string) {
   });
 }
 
-export async function generateEmailVerificationToken(email: string) {
+export async function generateEmailVerificationOtp(email: string) {
   const user = await findUserByEmail(email);
   if (!user) throw new Error("User not found");
 
-  const rawToken = crypto.randomBytes(32).toString("hex");
-  const hashedToken = hashToken(rawToken);
+  if (user.is_verified) {
+    throw new Error("Email already verified");
+  }
 
-  console.log("RAW TOKEN:", rawToken);
-console.log("HASHED TOKEN:", hashedToken);
+  const otp = generateOtp();
+  const hashedOtp = hashOtp(otp);
+  const expiresAt = getOtpExpiry();
 
   await prisma.emailVerification.upsert({
     where: { userId: user.id },
-    update: { token: hashedToken },
+    update: {
+      otp: hashedOtp,
+      expiresAt,
+    },
     create: {
       userId: user.id,
-      token: hashedToken,
+      otp: hashedOtp,
+      expiresAt,
     },
   });
 
-  return rawToken;
+  return otp; // send this via email
 }
 
 /**
- * VERIFY EMAIL TOKEN
+ * VERIFY EMAIL OTP
  */
-export async function verifyEmailToken(token: string) {
-  const hashedToken = hashToken(token);
-  console.log("VERIFY EMAIL ROUTE HIT");
-  
-  console.log("INCOMING TOKEN:", token);
-
-const hashed = hashToken(token);
-console.log("HASHED INCOMING:", hashed);
-
-const record = await prisma.emailVerification.findFirst({
-  where: { token: hashed },
-});
-
-console.log("DB RECORD:", record);
-
-  if (!record) throw new Error("Invalid token");
-
-  return record.userId;
-}
 
 /**
  * MARK EMAIL VERIFIED
@@ -222,4 +200,61 @@ export async function markEmailVerified(userId: string) {
  */
 function hashToken(token: string) {
   return crypto.createHash("sha256").update(token).digest("hex");
+}
+
+export async function saveEmailOtp({
+  email,
+  otp,
+}: {
+  email: string;
+  otp: string;
+}) {
+  const user = await findUserByEmail(email);
+  if (!user) throw new Error("User not found");
+
+  const hashedOtp = hashOtp(otp);
+  const expiresAt = getOtpExpiry();
+
+  await prisma.emailVerification.upsert({
+    where: { userId: user.id },
+    update: {
+      otp: hashedOtp,
+      expiresAt,
+    },
+    create: {
+      userId: user.id,
+      otp: hashedOtp,
+      expiresAt,
+    },
+  });
+}
+
+export async function verifyEmailOtp(email: string, otp: string) {
+  const user = await findUserByEmail(email);
+  if (!user) throw new Error("User not found");
+
+  const record = await prisma.emailVerification.findUnique({
+    where: { userId: user.id },
+  });
+
+  if (!record) throw new Error("OTP not found");
+
+  if (isOtpExpired(record.expiresAt)) {
+    throw new Error("OTP expired");
+  }
+
+  const isValid = compareOtp(otp, record.otp);
+
+  if (!isValid) throw new Error("Invalid OTP");
+
+  // mark verified
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { is_verified: true },
+  });
+
+  // cleanup
+  await prisma.emailVerification.delete({
+    where: { userId: user.id },
+  });
 }

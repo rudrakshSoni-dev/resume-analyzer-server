@@ -15,8 +15,12 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
+app.get("/", (_, res) => {
+  res.json({ message: "Welcome to the ATS Analyzer API" });
+});
+
 app.get("/health", (_, res) => {
-  res.json({ status: "OK", message: "ATS Analyzer API running 🚀" });
+  res.json({ status: "OK", message: "ATS Analyzer API running" });
 });
 
 app.use("/api/v0/auth", authRoutes);

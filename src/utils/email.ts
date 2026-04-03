@@ -10,6 +10,20 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+export async function sendVerificationOTP(email: string, otp: string) {
+  await transporter.sendMail({
+    from: `"Auth System" <${process.env.EMAIL_USER}>`,
+    to: email,
+    subject: "Verify your Email",
+    html: `
+      <h2>Email Verification</h2>
+      <p>Your OTP is:</p>
+      <h1>${otp}</h1>
+      <p>This OTP will expire in 10 minutes.</p>
+    `,
+  });
+}
+
 export async function sendEmail(
   to: string,
   subject: string,

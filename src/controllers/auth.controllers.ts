@@ -1,6 +1,8 @@
 import { Request, Response } from "express";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
+import {generateOtp} from "../utils/otp";
+import { sendVerificationOTP } from "../utils/email";
 
 import {
   registerUser,
@@ -10,9 +12,10 @@ import {
   generateResetToken,
   verifyResetToken,
   updatePassword,
-  generateEmailVerificationToken,
-  verifyEmailToken,
+  generateEmailVerificationOtp,
+  verifyEmailOtp,
   markEmailVerified,
+  saveEmailOtp,
 } from "../services/auth.service";
 
 import { sendEmail } from "../utils/email";
@@ -24,23 +27,21 @@ export async function register(req: Request, res: Response) {
   try {
     const result = await registerUser(req.body);
 
-    const verificationToken = await generateEmailVerificationToken(result.email);
+    const otp = generateOtp();
 
-    const verifyLink = `http://localhost:5000/api/v0/auth/verify-email?token=${verificationToken}`;
 
-    await sendEmail(
-      result.email, // send to actual user
-      "Verify your email",
-      `Click to verify: ${verifyLink}`
-    );
-
-    console.log("VERIFY TOKEN:", verificationToken);
+    await saveEmailOtp({
+      email: result.email,
+      otp,
+    });
+    sendVerificationOTP(result.email, otp);
+    console.log("EMAIL OTP:", otp);
 
     return res.status(201).json({
-      message: "User registered. Please verify your email.",
+      message: "User registered. Please verify your email using OTP.",
       user: result.user,
-      verificationToken,
-      verifyLink,
+
+      otp,
     });
   } catch (error: any) {
     return res.status(500).json({
@@ -143,18 +144,16 @@ export async function resetPassword(req: Request, res: Response) {
 
 export async function verifyEmail(req: Request, res: Response) {
   try {
-    const { token } = req.body;
+    const { email, otp } = req.body;
 
-    const userId = await verifyEmailToken(token);
+    const result = await verifyEmailOtp(email, otp);
 
-    await markEmailVerified(userId);
-
-    return res.json({
-      message: "Email verified successfully",
-    });
+    return res.json(result);
   } catch (error: any) {
     return res.status(400).json({
-      message: error.message || "Invalid verification token",
+      message: error.message || "Invalid OTP",
     });
   }
 }
+
+

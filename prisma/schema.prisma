@@ -111,8 +111,11 @@ model PasswordReset {
 }
 
 model EmailVerification {
-  id     String @id @default(uuid())
-  userId String @unique
-  token  String
-  user   User   @relation(fields: [userId], references: [id])
+  id        String   @id @default(uuid())
+  userId    String   @unique
+
+  otp       String  
+  expiresAt DateTime 
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
