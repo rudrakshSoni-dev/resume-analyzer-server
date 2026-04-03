@@ -146,9 +146,17 @@ export async function verifyEmail(req: Request, res: Response) {
   try {
     const { email, otp } = req.body;
 
-    const result = await verifyEmailOtp(email, otp);
+    if (!email || !otp) {
+      return res.status(400).json({
+        message: "Email and OTP are required",
+      });
+    }
 
-    return res.json(result);
+    await verifyEmailOtp(email, otp);
+
+    return res.json({
+      message: "Email verified successfully",
+    });
   } catch (error: any) {
     return res.status(400).json({
       message: error.message || "Invalid OTP",

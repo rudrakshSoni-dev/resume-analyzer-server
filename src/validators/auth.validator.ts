@@ -26,6 +26,8 @@ export const resetPasswordSchema = z.object({
 });
 
 export const verifyEmailSchema = z.object({
+  email:z.
+  string().email("Invalid email"),
   otp: z
     .string()
     .length(6, "Invalid OTP")

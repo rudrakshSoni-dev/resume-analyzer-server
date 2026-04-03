@@ -105,7 +105,7 @@ model Application {
 model PasswordReset {
   id        String   @id @default(uuid())
   userId    String   @unique
-  token     String
+  otp     String
   expiresAt DateTime
   user      User     @relation(fields: [userId], references: [id])
 }
