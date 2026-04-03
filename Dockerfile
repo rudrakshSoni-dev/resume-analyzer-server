@@ -1,5 +1,5 @@
-
-FROM node:20-alpine AS builder
+# ---------- BUILD STAGE ----------
+FROM node:20 AS builder  
 
 WORKDIR /app
 
@@ -9,10 +9,11 @@ RUN npm install
 COPY . .
 
 RUN npx prisma generate
-
 RUN npm run build
 
-FROM node:20-alpine
+
+# ---------- PRODUCTION STAGE ----------
+FROM node:20   
 
 WORKDIR /app
 
@@ -21,7 +22,6 @@ RUN npm install --omit=dev
 
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/prisma ./prisma
-
 COPY --from=builder /app/node_modules ./node_modules
 
 EXPOSE 5000
