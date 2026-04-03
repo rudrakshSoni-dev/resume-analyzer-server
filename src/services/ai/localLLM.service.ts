@@ -3,7 +3,10 @@
 import axios from "axios";
 import { SemanticResult } from "../../types/ats.types";
 
-const OLLAMA_URL = "http://localhost:11434/api/generate";
+const OLLAMA_URL =
+  process.env.OLLAMA_URL ||
+  "http://host.docker.internal:11434/api/generate";
+
 const MODEL_NAME = "phi3"; // or "phi3:mini"
 
 const safeJSONParse = <T>(text: string, fallback: T): T => {
@@ -64,7 +67,7 @@ ${resumeText}
           top_p: 0.9,
         }
       }, {
-        timeout: 20000
+        timeout: 60000
       });
 
       const raw = response.data.response ?? "{}";

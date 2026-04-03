@@ -37,14 +37,17 @@ model Analysis {
   resumeId String
   resume   Resume @relation(fields: [resumeId], references: [id], onDelete: Cascade)
 
-  atsScore        Float
-  keywordScore    Float
-  sectionScore    Float
-  skillScore      Float
-  structureScore  Float
-  semanticScore   Float
-  experienceScore Float
-  impactScore     Float
+  atsScore         Float
+  keywordScore     Float
+  readabilityScore Float?
+  grammarScore     Float?
+  formatScore      Float?
+  sectionScore     Float
+  skillScore       Float
+  structureScore   Float
+  semanticScore    Float
+  experienceScore  Float
+  impactScore      Float
 
   suggestions Json
 

@@ -98,31 +98,31 @@ function generateToken(userId: string) {
   );
 }
 
-export async function generateResetToken(email: string) {
-  const user = await findUserByEmail(email);
-  if (!user) throw new Error("User not found");
+// export async function generateResetToken(email: string) {
+//   const user = await findUserByEmail(email);
+//   if (!user) throw new Error("User not found");
 
-  const rawToken = crypto.randomBytes(32).toString("hex");
-  const hashedToken = hashToken(rawToken);
+//   const rawToken = crypto.randomBytes(32).toString("hex");
+//   const hashedToken = hashToken(rawToken);
 
-  const expiry = new Date(Date.now() + TOKEN_EXPIRY_MINUTES * 60 * 1000);
+//   const expiry = new Date(Date.now() + TOKEN_EXPIRY_MINUTES * 60 * 1000);
 
-  await prisma.passwordReset.upsert({
-    where: { userId: user.id },
-    update: {
-      token: hashedToken,
-      expiresAt: expiry,
-    },
-    create: {
-      userId: user.id,
-      token: hashedToken,
-      expiresAt: expiry,
-    },
-  });
+//   await prisma.passwordReset.upsert({
+//     where: { userId: user.id },
+//     update: {
+//       tok: hashedToken,
+//       expiresAt: expiry,
+//     },
+//     create: {
+//       userId: user.id,
+//       token: hashedToken,
+//       expiresAt: expiry,
+//     },
+//   });
 
-  return rawToken;
+//   return rawToken;
 
-}
+// }
 
 export async function sendPasswordResetOtp(email: string) {
   const user = await findUserByEmail(email);
@@ -207,7 +207,7 @@ export async function updatePassword(userId: string, newPassword: string) {
   });
 
   // delete reset token after use
-  await prisma.passwordReset.deleteMany({
+  await prisma.passwordResetOtp.deleteMany({
     where: { userId },
   });
 }

@@ -1,5 +1,6 @@
 // services/resume.service.ts
 
+import { Prisma } from "@prisma/client";
 import prisma from "../prisma/client";
 import { uploadToCloudinary } from "./cloudinary.service";
 import { documentParserService } from "./parser/documentParser.service";
@@ -125,26 +126,37 @@ async createResume(
       ],
     };
 
-    const analysis = await prisma.analysis.create({
-      data: {
-        resumeId: resume.id,
-        keywordScore: clampScore(keywordScore),
-        sectionScore: clampScore(sectionScore),
-        skillScore: clampScore(skillScore),
-        readabilityScore: clampScore(readabilityScore),
-        grammarScore: clampScore(grammarScore),
-        formatScore: clampScore(formatScore),
-        suggestions,
-      },
-    });
+const analysis = await prisma.analysis.create({
+  data: {
+    resumeId: resume.id,
+
+    // ✅ REQUIRED fields (you were missing these earlier)
+    atsScore: 0,
+    structureScore: 0,
+    semanticScore: 0,
+    experienceScore: 0,
+    impactScore: 0,
+
+    keywordScore: clampScore(keywordScore),
+    sectionScore: clampScore(sectionScore),
+    skillScore: clampScore(skillScore),
+
+    // 🔴 MATCH YOUR SCHEMA (typos!)
+    readabilityScore: clampScore(readabilityScore),
+    grammarScore: clampScore(grammarScore),
+    formatScore: clampScore(formatScore),
+
+    suggestions: suggestions as unknown as Prisma.JsonObject,
+  },
+});
 
     const atsScore = clampScore(
       (analysis.keywordScore +
         analysis.sectionScore +
         analysis.skillScore +
-        analysis.readabilityScore +
-        analysis.grammarScore +
-        analysis.formatScore) /
+        (analysis.readabilityScore ?? 0) +
+        (analysis.grammarScore ?? 0) +
+        (analysis.formatScore ?? 0)) /
         6
     );
 

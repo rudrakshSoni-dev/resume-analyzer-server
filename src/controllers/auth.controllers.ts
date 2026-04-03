@@ -9,7 +9,7 @@ import {
   loginUser,
   logoutUser,
   findUserByEmail,
-  generateResetToken,
+  // generateResetToken,
   updatePassword,
   generateEmailVerificationOtp,
   verifyEmailOtp,

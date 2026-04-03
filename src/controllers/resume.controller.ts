@@ -157,7 +157,7 @@ export const analyzeResume = async (
         experienceScore: result.experienceQuality.score,
         impactScore: result.experienceQuality.impactScore,
 
-        suggestions: result.suggestions as Prisma.JsonObject,
+        suggestions: result.suggestions as unknown as Prisma.JsonObject,
       },
     });
 

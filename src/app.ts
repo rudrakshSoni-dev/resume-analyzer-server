@@ -4,7 +4,7 @@ import helmet from "helmet";
 import morgan from "morgan";
 import authRoutes from "./routes/auth.routes";
 import cookieParser from "cookie-parser";
-import jobRoutes from "./routes/job.routes";
+// import jobRoutes from "./routes/job.routes";
 
 const app = express();
 
@@ -26,6 +26,6 @@ app.get("/health", (_, res) => {
 app.use("/api/v0/auth", authRoutes);
 app.use("/api/v0/resume", require("./routes/resume.routes").default);
 app.use("/api/v0/company", require("./routes/company.routes").default);
-app.use("/api/v0/job", jobRoutes);
+// app.use("/api/v0/job", jobRoutes);
 
 export default app;
