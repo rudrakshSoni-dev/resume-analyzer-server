@@ -8,6 +8,7 @@ import {
   validateResumeId,
   validateAnalyzeResume,
 } from "../validators/resume.validator";
+import { llmLimiter } from "../middleware/rateLimiter";
 
 const router = Router();
 
@@ -39,6 +40,7 @@ router.delete(
 
 router.post(
   "/:id/analyze",
+  llmLimiter,
   validateAnalyzeResume,
   handleValidationErrors,
   resumeController.analyzeResume,

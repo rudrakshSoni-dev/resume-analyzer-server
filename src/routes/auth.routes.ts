@@ -18,11 +18,12 @@ import {
   verifyResetOtpSchema,
 } from "../validators/auth.validator";
 import { requireAuth } from "../middleware/auth.middleware";
+import { authLimiter } from "../middleware/rateLimiter";
 
 const router = Router();
 
-router.post("/register", validate(registerSchema), register);
-router.post("/login", validate(loginSchema), login);
+router.post("/register", authLimiter, validate(registerSchema), register);
+router.post("/login", authLimiter, validate(loginSchema), login);
 router.post("/logout", requireAuth, logout);
 router.post("/health",(req,res)=>{
   res.json({ message: "auth route is healthy" });

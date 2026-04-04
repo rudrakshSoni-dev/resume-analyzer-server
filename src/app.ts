@@ -4,9 +4,11 @@ import helmet from "helmet";
 import morgan from "morgan";
 import authRoutes from "./routes/auth.routes";
 import cookieParser from "cookie-parser";
-// import jobRoutes from "./routes/job.routes";
+import { apiLimiter } from "./middleware/rateLimiter";
 
 const app = express();
+
+app.use("/api/v0/", apiLimiter); // Apply general API rate limiter to all /api/v0 routes
 
 app.use(cors());
 app.use(helmet());
