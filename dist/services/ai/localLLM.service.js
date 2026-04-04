@@ -8,7 +8,7 @@ exports.localLLMService = void 0;
 const axios_1 = __importDefault(require("axios"));
 const OLLAMA_URL = process.env.OLLAMA_URL ||
     "http://host.docker.internal:11434/api/generate";
-const MODEL_NAME = "phi3"; // or "phi3:mini"
+const MODEL_NAME = "phi3:mini"; // or "phi3:mini"
 const safeJSONParse = (text, fallback) => {
     try {
         return JSON.parse(text);
