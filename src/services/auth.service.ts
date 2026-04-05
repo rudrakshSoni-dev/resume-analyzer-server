@@ -11,6 +11,7 @@ interface RegisterData {
   email: string;
   password: string;
 }
+//for green dot 
 
 interface LoginData {
   email: string;
