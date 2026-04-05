@@ -5,7 +5,7 @@ FROM node:18-alpine AS builder
 
 WORKDIR /app
 
-# 🔥 Fix slow Alpine mirror + install deps
+# Fix slow Alpine mirror + install deps
 RUN sed -i 's/dl-cdn.alpinelinux.org/mirror.clarkson.edu/g' /etc/apk/repositories \
  && apk add --no-cache openssl
 
