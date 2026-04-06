@@ -17,7 +17,7 @@ const MODEL_NAME = "phi3:mini";
 // Queue (CRITICAL)
 // -----------------------------
 const llmQueue = new PQueue({
-  concurrency: 1, // 🔥 prevent RAM crash
+  concurrency: 1, // prevent RAM crash
 });
 
 // Optional overload protection
@@ -90,7 +90,7 @@ ${resumeText}
       const controller = new AbortController();
       const timeout = setTimeout(() => {
         controller.abort();
-      }, 30000); // 🔥 30s timeout
+      }, 30000); // 30s timeout
 
       try {
         const response = await axios.post(
