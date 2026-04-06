@@ -17,7 +17,7 @@
   "dependencies": {
     "@prisma/client": "^5.22.0",
     "apify-client": "^2.22.2",
-    "axios": "^1.13.6",
+    "axios": "^1.14.0",
     "bcrypt": "^6.0.0",
     "bullmq": "^5.71.0",
     "cloudinary": "^2.9.0",
@@ -38,6 +38,7 @@
     "node-fetch": "^3.3.2",
     "nodemailer": "^8.0.4",
     "openai": "^6.22.0",
+    "p-queue": "^9.1.1",
     "pdf-parse": "^1.1.1",
     "prisma": "^5.22.0",
     "resend": "^6.10.0",
