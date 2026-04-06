@@ -11,6 +11,7 @@ const auth_routes_1 = __importDefault(require("./routes/auth.routes"));
 const cookie_parser_1 = __importDefault(require("cookie-parser"));
 const rateLimiter_1 = require("./middleware/rateLimiter");
 const app = (0, express_1.default)();
+app.set("trust proxy", 1);
 app.use("/api/v0/", rateLimiter_1.apiLimiter); // Apply general API rate limiter to all /api/v0 routes
 app.use((0, cors_1.default)());
 app.use((0, helmet_1.default)());
