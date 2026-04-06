@@ -7,10 +7,11 @@ import cookieParser from "cookie-parser";
 import { apiLimiter } from "./middleware/rateLimiter";
 
 const app = express();
+app.set("trust proxy", 1);
+
 
 app.use("/api/v0/", apiLimiter); // Apply general API rate limiter to all /api/v0 routes
 
-app.set("trust proxy", 1);
 app.use(cors());
 app.use(helmet());
 app.use(morgan("dev"));
