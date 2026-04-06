@@ -1,29 +1,40 @@
-// src/utils/email.ts
+import { Resend } from "resend";
 
-import nodemailer from "nodemailer";
+const resend = new Resend(process.env.RESEND_API_KEY);
 
-const transporter = nodemailer.createTransport({
-  service: "gmail", // simpler than host/port
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
+const FROM_EMAIL = process.env.EMAIL_FROM || "onboarding@resend.dev";
 
+// 🔐 OTP EMAIL
 export async function sendVerificationOTP(email: string, otp: string) {
-  await transporter.sendMail({
-    from: `"Auth System" <${process.env.EMAIL_USER}>`,
-    to: email,
-    subject: "Verify your Email",
-    html: `
-      <h2>Email Verification</h2>
-      <p>Your OTP is:</p>
-      <h1>${otp}</h1>
-      <p>This OTP will expire in 10 minutes.</p>
-    `,
-  });
+  try {
+    console.log("SENDING OTP TO:", email);
+
+    const { data, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: email,
+      subject: "Verify your Email",
+      html: `
+        <h2>Email Verification</h2>
+        <p>Your OTP is:</p>
+        <h1>${otp}</h1>
+        <p>This OTP will expire in 10 minutes.</p>
+      `,
+    });
+
+    console.log("RESEND OTP RESPONSE:", { data, error });
+
+    if (error) {
+      throw new Error(error.message || "Failed to send OTP email");
+    }
+
+    return data;
+  } catch (err) {
+    console.error("EMAIL OTP ERROR:", err);
+    throw err;
+  }
 }
 
+// 📧 GENERIC EMAIL
 export async function sendEmail(
   to: string,
   subject: string,
@@ -31,19 +42,24 @@ export async function sendEmail(
   html?: string
 ) {
   try {
-    const info = await transporter.sendMail({
-      from: `"ATS Analyzer" <${process.env.EMAIL_USER}>`,
+    console.log("SENDING EMAIL TO:", to);
+
+    const { data, error } = await resend.emails.send({
+      from: FROM_EMAIL,
       to,
       subject,
-      text,
       html: html || `<p>${text}</p>`,
     });
 
-    console.log("EMAIL SENT:", info.messageId);
+    console.log("RESEND EMAIL RESPONSE:", { data, error });
 
-    return info;
-  } catch (error: any) {
-    console.error("EMAIL ERROR:", error);
-    throw new Error("Failed to send email");
+    if (error) {
+      throw new Error(error.message || "Failed to send email");
+    }
+
+    return data;
+  } catch (err) {
+    console.error("EMAIL ERROR:", err);
+    throw err;
   }
 }
