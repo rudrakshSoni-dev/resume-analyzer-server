@@ -5,9 +5,10 @@ const auth_controllers_1 = require("../controllers/auth.controllers");
 const validate_middleware_1 = require("../middleware/validate.middleware");
 const auth_validator_1 = require("../validators/auth.validator");
 const auth_middleware_1 = require("../middleware/auth.middleware");
+const rateLimiter_1 = require("../middleware/rateLimiter");
 const router = (0, express_1.Router)();
-router.post("/register", (0, validate_middleware_1.validate)(auth_validator_1.registerSchema), auth_controllers_1.register);
-router.post("/login", (0, validate_middleware_1.validate)(auth_validator_1.loginSchema), auth_controllers_1.login);
+router.post("/register", rateLimiter_1.authLimiter, (0, validate_middleware_1.validate)(auth_validator_1.registerSchema), auth_controllers_1.register);
+router.post("/login", rateLimiter_1.authLimiter, (0, validate_middleware_1.validate)(auth_validator_1.loginSchema), auth_controllers_1.login);
 router.post("/logout", auth_middleware_1.requireAuth, auth_controllers_1.logout);
 router.post("/health", (req, res) => {
     res.json({ message: "auth route is healthy" });

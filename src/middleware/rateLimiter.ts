@@ -11,7 +11,7 @@ export const apiLimiter = rateLimit({
 // Strict limiter for auth (OTP abuse protection)
 export const authLimiter = rateLimit({
   windowMs: 10 * 60 * 1000, // 10 min
-  max: 5, // 5 requests/IP
+  max: 12, // 12 requests/IP
   message: {
     success: false,
     message: "Too many requests. Try again later.",

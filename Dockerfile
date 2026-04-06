@@ -5,19 +5,15 @@ FROM node:18 AS builder
 
 WORKDIR /app
 
-# Copy package files first (for caching)
+# Install deps (cached)
 COPY package.json package-lock.json ./
-
-# Install dependencies
 RUN npm ci
 
-# Copy prisma schema
+# Copy prisma + generate client
 COPY prisma ./prisma
-
-# Generate Prisma client
 RUN npx prisma generate
 
-# Copy rest of the code
+# Copy full source
 COPY . .
 
 # Build TypeScript
@@ -30,12 +26,16 @@ FROM node:18
 
 WORKDIR /app
 
-# Copy only necessary files
+ENV NODE_ENV=production
+
 COPY --from=builder /app/package.json ./
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/dist ./dist
 
+# sanity check
+RUN test -f dist/server.js
+
 EXPOSE 5000
 
-CMD ["node", "dist/index.js"]
+CMD ["node", "dist/server.js"]

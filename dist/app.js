@@ -9,8 +9,9 @@ const helmet_1 = __importDefault(require("helmet"));
 const morgan_1 = __importDefault(require("morgan"));
 const auth_routes_1 = __importDefault(require("./routes/auth.routes"));
 const cookie_parser_1 = __importDefault(require("cookie-parser"));
-// import jobRoutes from "./routes/job.routes";
+const rateLimiter_1 = require("./middleware/rateLimiter");
 const app = (0, express_1.default)();
+app.use("/api/v0/", rateLimiter_1.apiLimiter); // Apply general API rate limiter to all /api/v0 routes
 app.use((0, cors_1.default)());
 app.use((0, helmet_1.default)());
 app.use((0, morgan_1.default)("dev"));
@@ -25,6 +26,6 @@ app.get("/health", (_, res) => {
 });
 app.use("/api/v0/auth", auth_routes_1.default);
 app.use("/api/v0/resume", require("./routes/resume.routes").default);
-app.use("/api/v0/company", require("./routes/company.routes").default);
+// app.use("/api/v0/company", require("./routes/company.routes").default);
 // app.use("/api/v0/job", jobRoutes);
 exports.default = app;
