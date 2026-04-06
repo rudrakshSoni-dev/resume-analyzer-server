@@ -1,24 +1,20 @@
 # ----------------------------
 # Stage 1: builder
 # ----------------------------
-FROM node:18-alpine AS builder
+FROM node:18 AS builder
 
 WORKDIR /app
 
-# Fix slow Alpine mirror + install deps
-RUN sed -i 's/dl-cdn.alpinelinux.org/mirror.clarkson.edu/g' /etc/apk/repositories \
- && apk add --no-cache openssl
-
-# Copy only package files (better caching)
+# Copy package files first (for caching)
 COPY package.json package-lock.json ./
 
 # Install dependencies
 RUN npm ci
 
-# Copy Prisma schema separately (cache optimization)
+# Copy prisma schema
 COPY prisma ./prisma
 
-# Generate Prisma client (no DB connection needed)
+# Generate Prisma client
 RUN npx prisma generate
 
 # Copy rest of the code
@@ -30,15 +26,11 @@ RUN npm run build
 # ----------------------------
 # Stage 2: runner
 # ----------------------------
-FROM node:18-alpine
+FROM node:18
 
 WORKDIR /app
 
-# 🔥 Same mirror fix here
-RUN sed -i 's/dl-cdn.alpinelinux.org/mirror.clarkson.edu/g' /etc/apk/repositories \
- && apk add --no-cache openssl
-
-# Copy only required files from builder
+# Copy only necessary files
 COPY --from=builder /app/package.json ./
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/prisma ./prisma
