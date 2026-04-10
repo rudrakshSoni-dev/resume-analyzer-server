@@ -1,15 +1,22 @@
-import { Resend } from "resend";
+import nodemailer from "nodemailer";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// 🚀 Initialize Nodemailer with Google SMTP
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.EMAIL_USER, // e.g., your.email@gmail.com
+    pass: process.env.EMAIL_APP_PASSWORD, // 16-character Google App Password
+  },
+});
 
-const FROM_EMAIL = process.env.EMAIL_FROM || "onboarding@resend.dev";
+const FROM_EMAIL = process.env.EMAIL_FROM || process.env.EMAIL_USER;
 
 // 🔐 OTP EMAIL
 export async function sendVerificationOTP(email: string, otp: string) {
   try {
     console.log("SENDING OTP TO:", email);
 
-    const { data, error } = await resend.emails.send({
+    const info = await transporter.sendMail({
       from: FROM_EMAIL,
       to: email,
       subject: "Verify your Email",
@@ -21,13 +28,9 @@ export async function sendVerificationOTP(email: string, otp: string) {
       `,
     });
 
-    console.log("RESEND OTP RESPONSE:", { data, error });
+    console.log("NODEMAILER OTP RESPONSE:", info.messageId);
 
-    if (error) {
-      throw new Error(error.message || "Failed to send OTP email");
-    }
-
-    return data;
+    return info;
   } catch (err) {
     console.error("EMAIL OTP ERROR:", err);
     throw err;
@@ -44,20 +47,17 @@ export async function sendEmail(
   try {
     console.log("SENDING EMAIL TO:", to);
 
-    const { data, error } = await resend.emails.send({
+    const info = await transporter.sendMail({
       from: FROM_EMAIL,
       to,
       subject,
+      text: text, // Nodemailer handles plaintext fallbacks well if you provide 'text'
       html: html || `<p>${text}</p>`,
     });
 
-    console.log("RESEND EMAIL RESPONSE:", { data, error });
+    console.log("NODEMAILER EMAIL RESPONSE:", info.messageId);
 
-    if (error) {
-      throw new Error(error.message || "Failed to send email");
-    }
-
-    return data;
+    return info;
   } catch (err) {
     console.error("EMAIL ERROR:", err);
     throw err;
