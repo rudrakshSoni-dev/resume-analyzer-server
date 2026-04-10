@@ -1,6 +1,9 @@
 import nodemailer from "nodemailer";
 
-// 🚀 Initialize Nodemailer with Google SMTP
+console.log("DEBUG EMAIL_USER:", process.env.EMAIL_USER);
+console.log("DEBUG APP_PASS:", process.env.EMAIL_APP_PASSWORD ? "Loaded" : "Undefined");
+
+
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
@@ -11,7 +14,6 @@ const transporter = nodemailer.createTransport({
 
 const FROM_EMAIL = process.env.EMAIL_FROM || process.env.EMAIL_USER;
 
-// 🔐 OTP EMAIL
 export async function sendVerificationOTP(email: string, otp: string) {
   try {
     console.log("SENDING OTP TO:", email);
