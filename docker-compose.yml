@@ -1,35 +1,23 @@
-version: "3.9"
-
 services:
-  caddy:
-    image: caddy:2-alpine
-    container_name: resume-caddy
-    restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile
-      - caddy_data:/data
-      - caddy_config:/config
-    networks:
-      - app-network
-    depends_on:
-      - backend
-
   backend:
     build:
       context: .
       dockerfile: Dockerfile
     container_name: resume-backend
     restart: unless-stopped
+
     env_file:
       - .env
+
     environment:
-      # Ensures the backend targets the internal Docker DNS for Ollama
-      - OLLAMA_URL=http://ollama:11434/api/generate 
+      - OLLAMA_URL=http://ollama:11434/api/generate
+
+    ports:
+      - "5000:3000"   # host:container
+
     depends_on:
       - ollama
+
     networks:
       - app-network
 
@@ -37,8 +25,10 @@ services:
     image: ollama/ollama:latest
     container_name: ollama
     restart: unless-stopped
+
     volumes:
       - ollama_data:/root/.ollama
+
     networks:
       - app-network
 
@@ -48,5 +38,3 @@ networks:
 
 volumes:
   ollama_data:
-  caddy_data:
-  caddy_config:
