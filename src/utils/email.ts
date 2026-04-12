@@ -1,45 +1,84 @@
 import nodemailer from "nodemailer";
 
-console.log("DEBUG EMAIL_USER:", process.env.EMAIL_USER);
-console.log("DEBUG APP_PASS:", process.env.EMAIL_APP_PASSWORD ? "Loaded" : "Undefined");
+// ENV VALIDATION
+if (!process.env.EMAIL_USER || !process.env.EMAIL_APP_PASSWORD) {
+  throw new Error("Missing EMAIL_USER or EMAIL_APP_PASSWORD in env");
+}
 
-
+// TRANSPORTER
 const transporter = nodemailer.createTransport({
-  service: "gmail",
+  pool: true,
+  maxConnections: 5,
+  maxMessages: 100,
+
+  host: process.env.EMAIL_HOST || "smtp.gmail.com",
+  port: Number(process.env.EMAIL_PORT) || 587,
+  secure: false, // STARTTLS (Gmail)
+
   auth: {
-    user: process.env.EMAIL_USER, // e.g., your.email@gmail.com
-    pass: process.env.EMAIL_APP_PASSWORD, // 16-character Google App Password
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_APP_PASSWORD,
   },
+
+  connectionTimeout: 10000,
+  greetingTimeout: 5000,
+  socketTimeout: 10000,
 });
 
-const FROM_EMAIL = process.env.EMAIL_FROM || process.env.EMAIL_USER;
+// VERIFY SMTP ON START
+transporter.verify((err) => {
+  if (err) {
+    console.error("SMTP ERROR:", err);
+  } else {
+    console.log("SMTP READY");
+  }
+});
 
+// FROM EMAIL
+const FROM_EMAIL =
+  process.env.EMAIL_FROM || process.env.EMAIL_USER as string;
+
+// RETRY WRAPPER
+const sendWithRetry = async (mailOptions: any, retries = 3): Promise<any> => {
+  for (let i = 0; i < retries; i++) {
+    try {
+      return await transporter.sendMail(mailOptions);
+    } catch (err) {
+      if (i === retries - 1) throw err;
+      console.warn(`Retrying email... (${i + 1})`);
+    }
+  }
+  throw new Error("Failed to send email after retries");
+};
+
+// OTP EMAIL
 export async function sendVerificationOTP(email: string, otp: string) {
   try {
-    console.log("SENDING OTP TO:", email);
+    console.log("Sending OTP to:", email);
 
-    const info = await transporter.sendMail({
+    const info = await sendWithRetry({
       from: FROM_EMAIL,
       to: email,
       subject: "Verify your Email",
       html: `
-        <h2>Email Verification</h2>
-        <p>Your OTP is:</p>
-        <h1>${otp}</h1>
-        <p>This OTP will expire in 10 minutes.</p>
+        <div style="font-family:sans-serif;max-width:500px;margin:auto">
+          <h2>Email Verification</h2>
+          <p>Your OTP is:</p>
+          <h1 style="letter-spacing:6px;">${otp}</h1>
+          <p>This OTP expires in 10 minutes.</p>
+        </div>
       `,
     });
 
-    console.log("NODEMAILER OTP RESPONSE:", info.messageId);
-
+    console.log("OTP SENT:", info.messageId);
     return info;
   } catch (err) {
-    console.error("EMAIL OTP ERROR:", err);
+    console.error("OTP EMAIL ERROR:", err);
     throw err;
   }
 }
 
-// 📧 GENERIC EMAIL
+// GENERIC EMAIL
 export async function sendEmail(
   to: string,
   subject: string,
@@ -47,18 +86,17 @@ export async function sendEmail(
   html?: string
 ) {
   try {
-    console.log("SENDING EMAIL TO:", to);
+    console.log("Sending email to:", to);
 
-    const info = await transporter.sendMail({
+    const info = await sendWithRetry({
       from: FROM_EMAIL,
       to,
       subject,
-      text: text, // Nodemailer handles plaintext fallbacks well if you provide 'text'
+      text,
       html: html || `<p>${text}</p>`,
     });
 
-    console.log("NODEMAILER EMAIL RESPONSE:", info.messageId);
-
+    console.log("EMAIL SENT:", info.messageId);
     return info;
   } catch (err) {
     console.error("EMAIL ERROR:", err);
