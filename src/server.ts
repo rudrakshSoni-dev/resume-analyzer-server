@@ -13,7 +13,7 @@ console.log("Cloudinary configured:", !!cloudinary_config.cloud_name);
 async function startServer() {
   try {
 
-    // await prisma.$connect();
+    await prisma.$connect();
     console.log("Database connected");
 
     app.listen(PORT, "0.0.0.0", () => {
