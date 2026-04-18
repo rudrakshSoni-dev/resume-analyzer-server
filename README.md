@@ -2,7 +2,7 @@
 
 REST API for AI-powered resume parsing, cloud storage, and multi-dimensional ATS scoring. Built with Node.js, Prisma, PostgreSQL, and LLM-based analysis.
 
-**Frontend repo:** [https://github.com/rudrakshSoni-dev/resume-analyzer-client](#) · **Live demo:** [https://resume-analyzer-client-pi.vercel.app/](#)
+**Frontend repo:** [Client-side code](https://github.com/rudrakshSoni-dev/resume-analyzer-client) · **Live demo:** [see live](https://resume-analyzer-client-pi.vercel.app/)
 
 ---
 
